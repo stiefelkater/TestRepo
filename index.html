@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kevin Explains Your Generation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One+SC&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=VT323&display=swap">
+<style>
+  /* Single-look design: a late-night public-access show on VHS. Colors are set explicitly for any host theme. */
+  :root {
+    color-scheme: dark;
+    --abyss: #08172A;
+    --sea: #123C5E;
+    --sea-hi: #1E5A85;
+    --panel: rgba(6, 16, 30, 0.86);
+    --line: #2B4A6B;
+    --dolphin: #8FA9C2;
+    --dolphin-dk: #5E7A96;
+    --belly: #D9E4EE;
+    --mullet: #7A4A22;
+    --ink: #F2F2EA;
+    --muted: #9FB3C8;
+    --osd: #7CF29A;
+    --laser: #FF2B2B;
+    --laser-hot: #FFD2D2;
+    --char: #3A2A22;
+    --display: "Bowlby One SC", "Arial Black", Impact, sans-serif;
+    --body: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    --osd-font: "VT323", "Courier New", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body {
+    background: radial-gradient(120% 80% at 50% 0%, #0E2440 0%, var(--abyss) 60%) var(--abyss);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.45;
+    padding-inline: 16px;
+    padding-block: 20px 40px;
+    min-height: 100%;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 18px; }
+
+  header.masthead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+  .masthead h1 {
+    font-family: var(--display); font-weight: 400; margin: 0;
+    font-size: clamp(22px, 3.4vw, 34px); letter-spacing: 0.01em; text-wrap: balance;
+  }
+  .masthead h1 span { color: var(--laser); }
+  .masthead p { margin: 0; font-family: var(--osd-font); font-size: 20px; color: var(--muted); letter-spacing: 0.04em; }
+
+  /* ---------- TV: stage + exhibit card share one grid cell on wide screens ---------- */
+  .tv { position: relative; display: grid; border-radius: 18px; overflow: hidden; background: #000; box-shadow: 0 0 0 6px #0B0F14, 0 0 0 7px #26313D, 0 30px 60px rgba(0,0,0,.5); }
+  .stage {
+    grid-area: 1 / 1; position: relative; aspect-ratio: 16 / 9; width: 100%; overflow: hidden;
+    background:
+      radial-gradient(60% 50% at 30% 30%, rgba(80,160,220,.18), transparent 70%),
+      linear-gradient(180deg, #0B2340 0%, #0F3354 55%, #134066 100%);
+  }
+  .stage::before { /* light shafts */
+    content: ""; position: absolute; inset: -20% -10% 20% -10%;
+    background: repeating-linear-gradient(100deg, rgba(160,220,255,.06) 0 40px, transparent 40px 110px);
+    animation: shafts 14s linear infinite; pointer-events: none;
+  }
+  @keyframes shafts { to { transform: translateX(110px); } }
+
+  .card { grid-area: 1 / 1; justify-self: end; align-self: center; width: min(44%, 470px); margin-right: 3%; z-index: 5; }
+
+  /* ---------- Kevin ---------- */
+  #kevin { position: absolute; left: 2%; bottom: -2%; height: 92%; width: auto; max-width: 52%; overflow: visible; z-index: 2; }
+  #kbody { transform-box: view-box; transform-origin: 200px 380px; }
+  .k-skin { fill: var(--dolphin); }
+  .k-dark { fill: var(--dolphin-dk); }
+  .k-belly { fill: var(--belly); }
+  .k-mullet { fill: var(--mullet); }
+  .k-mouth { fill: #4A1320; }
+  .k-sclera { fill: #FFFFFF; }
+  .k-iris { fill: var(--laser); filter: url(#glow); transition: r .12s; }
+  #kevin.firing .k-iris { fill: var(--laser-hot); r: 8; }
+  #kevin.firing .k-iris.far { r: 5; }
+  #jaw { transform-box: view-box; transform-origin: 338px 180px; }
+  #fin { transform-box: view-box; transform-origin: 262px 270px; animation: fin 2.8s ease-in-out infinite; }
+  @keyframes fin { 50% { transform: rotate(-9deg); } }
+  #spout circle { fill: #BFE6FF; opacity: 0; }
+  #kevin.spouting #spout circle { animation: drop 1.1s ease-out forwards; }
+  #kevin.spouting #spout circle:nth-child(2) { animation-delay: .08s; }
+  #kevin.spouting #spout circle:nth-child(3) { animation-delay: .16s; }
+  #kevin.spouting #spout circle:nth-child(4) { animation-delay: .24s; }
+  @keyframes drop { 0% { opacity: 1; transform: translate(0,0); } 100% { opacity: 0; transform: translate(var(--dx), -70px); } }
+
+  /* ---------- Props Kevin shoots at ---------- */
+  #prop {
+    position: absolute; left: 44%; top: 9%; width: 13%; aspect-ratio: 1; z-index: 3;
+    display: grid; place-items: center; animation: float 3.2s ease-in-out infinite;
+  }
+  #prop svg { width: 100%; height: 100%; overflow: visible; }
+  #prop.burn { animation: burn .7s ease-out forwards; }
+  @keyframes float { 50% { transform: translateY(-8px) rotate(3deg); } }
+  @keyframes burn {
+    0% { filter: brightness(3) saturate(0); transform: scale(1.1); }
+    40% { filter: brightness(.4) sepia(1) hue-rotate(-30deg); transform: scale(1.05) rotate(-6deg); }
+    100% { filter: brightness(.25) sepia(1); transform: scale(.2) rotate(40deg); opacity: 0; }
+  }
+
+  /* ---------- Water ---------- */
+  .waves { position: absolute; left: 0; right: 0; bottom: 0; height: 22%; pointer-events: none; }
+  .waves svg { position: absolute; bottom: 0; left: 0; width: 200%; height: 100%; }
+  .waves .back { animation: waves 9s linear infinite; z-index: 1; opacity: .8; }
+  .waves.front { z-index: 4; height: 17%; }
+  .waves.front svg { animation: waves 6s linear infinite reverse; }
+  @keyframes waves { to { transform: translateX(-50%); } }
+
+  /* ---------- VHS on-screen display ---------- */
+  .osd { position: absolute; z-index: 8; font-family: var(--osd-font); color: var(--osd); text-shadow: 0 0 6px rgba(124,242,154,.6), 2px 0 rgba(255,0,80,.35), -2px 0 rgba(0,200,255,.35); font-size: clamp(16px, 2.3vw, 28px); line-height: 1; letter-spacing: .04em; pointer-events: none; }
+  .osd.tl { top: 4%; left: 3%; }
+  .osd.tr { top: 4%; right: 3%; text-align: right; }
+  .osd.bl { bottom: 4%; left: 3%; opacity: .85; font-size: clamp(13px, 1.7vw, 20px); }
+  .score { position: absolute; z-index: 8; top: 4%; left: 50%; transform: translateX(-50%); font-family: var(--osd-font); font-size: clamp(15px, 2vw, 24px); background: rgba(0,0,0,.55); padding: 3px 10px; border: 1px solid rgba(124,242,154,.4); color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .score b { color: var(--osd); font-weight: 400; }
+  .score i { color: var(--laser); font-style: normal; }
+
+  .scan { position: absolute; inset: 0; z-index: 9; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 2px, transparent 2px 4px);
+    mix-blend-mode: multiply; }
+  .vignette { position: absolute; inset: 0; z-index: 9; pointer-events: none; box-shadow: inset 0 0 120px rgba(0,0,0,.75); }
+  .tracking { position: absolute; left: 0; right: 0; height: 10%; z-index: 9; pointer-events: none; top: -12%;
+    background: linear-gradient(180deg, transparent, rgba(255,255,255,.07) 40%, rgba(255,255,255,.12) 50%, transparent);
+    animation: track 7s linear infinite; }
+  @keyframes track { to { top: 112%; } }
+
+  /* ---------- Captions ---------- */
+  .cc { position: absolute; z-index: 7; left: 50%; bottom: 6%; transform: translateX(-50%); width: min(90%, 760px); text-align: center; pointer-events: none; }
+  .cc span { display: inline; background: rgba(0,0,0,.82); color: var(--ink); font-weight: 600; font-size: clamp(15px, 2.1vw, 24px); line-height: 1.5; padding: 2px 10px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .cc.off, .cc span:empty { display: none; }
+
+  /* ---------- Exhibit card ---------- */
+  .card { background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(3px); }
+  .card header { background: var(--laser); color: #fff; padding: 6px 12px; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+  .card header .ex { font-family: var(--osd-font); font-size: 20px; letter-spacing: .06em; }
+  .card header h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(15px, 1.8vw, 21px); letter-spacing: .02em; text-wrap: balance; }
+  .card .cols { display: grid; grid-template-columns: 1fr 1fr; }
+  .card .col { padding: 10px 12px 12px; display: grid; align-content: start; gap: 7px; min-height: 120px; }
+  .card .col + .col { border-left: 1px dashed var(--line); }
+  .card h3 { margin: 0 0 2px; font-family: var(--osd-font); font-weight: 400; font-size: 22px; letter-spacing: .08em; }
+  .col.gx h3 { color: var(--osd); }
+  .col.yu h3 { color: #FF8A8A; }
+  .item { font-size: clamp(13px, 1.35vw, 16px); line-height: 1.3; padding: 5px 8px; border-left: 3px solid; background: rgba(255,255,255,.04); opacity: 0; transform: translateX(-8px); transition: opacity .25s, transform .25s; position: relative; }
+  .gx .item { border-color: var(--osd); }
+  .yu .item { border-color: #FF8A8A; }
+  .item.on { opacity: 1; transform: none; }
+  .item.zapped { color: #C9A38C; text-decoration: line-through; text-decoration-color: var(--laser); text-decoration-thickness: 2px;
+    background: radial-gradient(circle at 30% 50%, rgba(40,20,10,.95), rgba(90,30,10,.6) 60%, rgba(255,80,20,.15)); border-color: var(--char); animation: shake .35s; }
+  .item.zapped::after { content: "ZAPPED"; position: absolute; right: 6px; top: 50%; transform: translateY(-50%) rotate(-8deg); font-family: var(--osd-font); font-size: 16px; color: var(--laser); border: 1px solid var(--laser); padding: 0 4px; text-decoration: none; }
+  .item.stamp { font-family: var(--display); font-size: clamp(20px, 2.6vw, 32px); border: none; background: none; color: var(--osd); transform: rotate(-4deg) scale(1.6); }
+  .item.stamp.on { transform: rotate(-4deg) scale(1); transition: transform .3s cubic-bezier(.3,1.8,.5,1), opacity .1s; }
+  @keyframes shake { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
+
+  /* ---------- Lasers, sparks, screen crack ---------- */
+  #beams { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; overflow: visible; }
+  #beams .outer { stroke: var(--laser); stroke-width: 9; stroke-linecap: round; opacity: .55; filter: url(#beamglow); }
+  #beams .core { stroke: #FFF4F4; stroke-width: 2.5; stroke-linecap: round; }
+  .spark { position: absolute; z-index: 11; width: 6px; height: 6px; border-radius: 50%; background: #FFD27A; box-shadow: 0 0 8px #FF7A1A; pointer-events: none; }
+  #crack { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 9; pointer-events: none; opacity: 0; }
+  #crack.on { opacity: 1; }
+  #crack path { fill: none; stroke: rgba(230,245,255,.85); stroke-width: 2; stroke-linecap: round; }
+  .tv.jolt { animation: jolt .4s; }
+  @keyframes jolt { 20% { transform: translate(-6px, 3px); } 40% { transform: translate(5px, -4px); } 60% { transform: translate(-3px, 2px); } }
+  .flash { position: absolute; inset: 0; z-index: 12; background: #fff; opacity: 0; pointer-events: none; }
+  .dim { position: absolute; inset: 0; z-index: 6; background: #000; opacity: 0; transition: opacity 3s; pointer-events: none; }
+  .dim.on { opacity: .55; }
+
+  /* ---------- Intro and outro cards on the stage ---------- */
+  .slate { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; text-align: center; padding: 4%;
+    background: linear-gradient(180deg, rgba(4,12,24,.55), rgba(4,12,24,.88)); }
+  .slate .inner { display: grid; gap: clamp(6px, 1.4vw, 14px); justify-items: center; max-width: 640px; }
+  .slate .kicker { font-family: var(--osd-font); color: var(--osd); font-size: clamp(16px, 2.2vw, 26px); letter-spacing: .1em; }
+  .slate h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(26px, 5.4vw, 64px); line-height: .95; text-wrap: balance; }
+  .slate h2 em { font-style: normal; color: var(--laser); text-shadow: 0 0 18px rgba(255,43,43,.6); }
+  .slate p { margin: 0; color: var(--muted); font-size: clamp(13px, 1.6vw, 18px); text-wrap: balance; }
+  .bigplay { font-family: var(--osd-font); font-size: clamp(22px, 3vw, 34px); letter-spacing: .08em; color: #fff; background: var(--laser); border: none; padding: 8px 26px 6px; cursor: pointer; box-shadow: 0 0 0 3px rgba(255,43,43,.3), 0 0 30px rgba(255,43,43,.5); }
+  .bigplay:hover { background: #FF4A4A; }
+  .bigplay:focus-visible, .ctrl button:focus-visible, .chapters button:focus-visible { outline: 3px solid var(--osd); outline-offset: 3px; }
+  .slate.off-anim { animation: crtoff .9s ease-in forwards; }
+  .crt-off { animation: crtoff .7s ease-in forwards; }
+  @keyframes crtoff { 0% { transform: scale(1,1); filter: brightness(1); } 60% { transform: scale(1,.01); filter: brightness(4); } 100% { transform: scale(0,.01); filter: brightness(8); opacity: 0; } }
+
+  /* ---------- Controls and chapters ---------- */
+  .deck { display: grid; gap: 12px; }
+  .ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .ctrl button { font-family: var(--osd-font); font-size: 22px; letter-spacing: .06em; color: var(--ink); background: #0F2034; border: 1px solid var(--line); padding: 4px 14px 2px; cursor: pointer; }
+  .ctrl button:hover { border-color: var(--osd); color: var(--osd); }
+  .ctrl button[aria-pressed="true"] { color: var(--osd); border-color: var(--osd); }
+  .bar { flex: 1 1 200px; height: 10px; background: #0F2034; border: 1px solid var(--line); position: relative; min-width: 120px; }
+  .bar i { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, var(--laser), #FF7A5A); }
+  .time { font-family: var(--osd-font); font-size: 22px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .chapters { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+  .chapters button { width: 100%; text-align: left; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: baseline; padding: 8px 10px; cursor: pointer;
+    background: #EDE6D6; color: #1B1B1B; border: none; border-left: 8px solid #1B1B1B; font-family: var(--body); font-weight: 600; font-size: 15px; }
+  .chapters button .n { font-family: var(--osd-font); font-size: 20px; font-weight: 400; color: #6B6255; }
+  .chapters button .d { font-family: var(--osd-font); font-size: 18px; font-weight: 400; color: #6B6255; font-variant-numeric: tabular-nums; }
+  .chapters button[aria-current="true"] { background: var(--laser); color: #fff; border-left-color: #7A0000; }
+  .chapters button[aria-current="true"] .n, .chapters button[aria-current="true"] .d { color: #FFE0E0; }
+  .credits { font-size: 13px; color: var(--muted); margin: 0; max-width: 72ch; }
+
+  /* ---------- Narrow screens: stage above, card below ---------- */
+  @media (max-width: 720px) {
+    .stage { aspect-ratio: 4 / 3; }
+    .card { grid-area: 2 / 1; width: 100%; margin: 0; justify-self: stretch; }
+    #kevin { height: 80%; max-width: 70%; }
+    #prop { left: 66%; top: 24%; width: 22%; }
+    .score { top: 14%; font-size: 15px; }
+    .card .col { min-height: 64px; }
+    .masthead p { font-size: 16px; }
+    .cc { bottom: 4%; }
+    .osd.bl { display: none; }
+  }
+  @media (max-width: 420px) {
+    .card .cols { grid-template-columns: 1fr; }
+    .card .col + .col { border-left: none; border-top: 1px dashed var(--line); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stage::before, .tracking, #fin, #prop, .waves svg { animation: none !important; }
+    .tv.jolt, .item.zapped { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <h1>Kevin Explains <span>Your Generation</span></h1>
+    <p>CH 13 · PUBLIC ACCESS · RECORDED IN SP</p>
+  </header>
+
+  <div class="tv" id="tv">
+    <div class="stage" id="stage">
+      <div class="waves"><svg class="back" viewBox="0 0 1600 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40 Q100 10 200 40 T400 40 T600 40 T800 40 T1000 40 T1200 40 T1400 40 T1600 40 V100 H0 Z" fill="#1E5A85"/></svg></div>
+
+      <svg id="kevin" viewBox="0 0 420 380" role="img" aria-label="Kevin, a gray dolphin with a mullet and glowing red laser eyes">
+        <defs>
+          <filter id="glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <g id="kbody">
+          <path class="k-dark" d="M120 215 C104 170 112 138 142 116 C140 150 150 180 168 200 Z"/>
+          <path class="k-mullet" d="M214 104 C186 100 162 118 150 150 C140 178 136 206 146 236 C154 222 154 206 162 196 C166 216 174 230 188 238 C184 214 186 190 198 170 C206 150 212 130 214 104 Z"/>
+          <path class="k-skin" d="M110 380 C92 290 110 190 178 132 C214 100 262 88 298 100 C322 108 338 126 342 148 L392 154 C404 156 406 170 394 173 L338 178 C334 214 312 262 296 380 Z"/>
+          <path class="k-belly" d="M338 180 C334 214 314 262 298 380 L252 380 C262 300 290 232 322 192 Z"/>
+          <path class="k-mullet" d="M228 98 L234 80 L244 94 L252 76 L260 93 L270 80 L276 99 C260 94 244 94 228 98 Z"/>
+          <path class="k-mouth" d="M338 176 L392 172 L336 198 Z"/>
+          <g id="jaw"><path class="k-skin" d="M336 176 L388 174 C398 175 396 185 387 187 L334 197 Z"/><path class="k-belly" d="M340 188 L386 184 C390 185 389 186 386 187 L336 196 Z"/></g>
+          <circle class="k-sclera" cx="325" cy="118" r="7"/>
+          <circle class="k-iris far" id="eyeF" cx="327" cy="118" r="3.5"/>
+          <circle class="k-sclera" cx="298" cy="134" r="13"/>
+          <circle class="k-iris" id="eyeN" cx="302" cy="135" r="6"/>
+          <path class="k-dark" d="M283 136 C282 118 312 115 313 132 C303 127 292 128 283 136 Z"/>
+          <path class="k-dark" d="M317 116 C319 108 332 108 333 116 C327 113 322 113 317 116 Z"/>
+          <g id="fin"><path class="k-dark" d="M262 262 C236 280 214 304 204 330 C240 318 266 296 278 272 Z"/></g>
+          <g id="spout" transform="translate(246 94)">
+            <circle r="4" style="--dx:-14px"/><circle r="3" style="--dx:6px"/><circle r="5" style="--dx:-4px"/><circle r="3" style="--dx:16px"/>
+          </g>
+        </g>
+      </svg>
+
+      <div id="prop" aria-hidden="true"></div>
+      <div class="waves front"><svg viewBox="0 0 1600 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 35 Q100 5 200 35 T400 35 T600 35 T800 35 T1000 35 T1200 35 T1400 35 T1600 35 V100 H0 Z" fill="#123C5E"/><path d="M0 35 Q100 5 200 35 T400 35 T600 35 T800 35 T1000 35 T1200 35 T1400 35 T1600 35" fill="none" stroke="#6FB6E6" stroke-width="2" opacity=".6"/></svg></div>
+
+      <div class="dim" id="dim"></div>
+      <div class="osd tl" id="osdState">STOP ■</div>
+      <div class="osd tr"><span>SP</span><br><span id="osdClock">0:00:00</span></div>
+      <div class="osd bl">CH 13 · SEP 26</div>
+      <div class="score" aria-live="off">GEN X <b id="scoreX">0</b> · YOU <i id="scoreY">0</i></div>
+      <div class="cc" id="cc" aria-live="polite"><span id="ccText"></span></div>
+
+      <svg id="crack" viewBox="0 0 160 90" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M96 38 L110 20 L118 4"/><path d="M96 38 L124 34 L150 40 L160 36"/><path d="M96 38 L112 52 L120 70 L132 90"/>
+        <path d="M96 38 L84 58 L78 76"/><path d="M96 38 L78 30 L58 34 L40 22"/><path d="M110 20 L102 12"/><path d="M124 34 L130 24"/><path d="M84 58 L70 60"/>
+      </svg>
+      <div class="scan"></div><div class="tracking"></div><div class="vignette"></div>
+      <div class="flash" id="flash"></div>
+
+      <div class="slate" id="intro">
+        <div class="inner">
+          <div class="kicker">CH 13 · 11:30 PM · PUBLIC ACCESS</div>
+          <h2>Kevin Explains <em>Your Generation</em></h2>
+          <p>A Gen X dolphin with laser eyes reviews the current generation. Nine segments. About two minutes. Sound on.</p>
+          <button class="bigplay" id="bigPlay" type="button">▶ PLAY TAPE</button>
+        </div>
+      </div>
+      <div class="slate" id="outro" hidden>
+        <div class="inner">
+          <div class="kicker">END OF TAPE</div>
+          <h2>Kevin has left <em>the reef</em></h2>
+          <p>He is in a dark room. Do not call him. (Call him. Nobody calls anymore.)</p>
+          <button class="bigplay" id="rewind2" type="button">◀◀ REWIND</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="card" id="card" aria-live="polite">
+      <header><span class="ex" id="cardEx">TONIGHT</span><h2 id="cardTitle">The Program</h2></header>
+      <div class="cols">
+        <div class="col gx" id="colGx"><h3>GEN X</h3></div>
+        <div class="col yu" id="colYu"><h3>YOU</h3></div>
+      </div>
+    </section>
+
+    <svg id="beams" aria-hidden="true"><defs><filter id="beamglow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs></svg>
+  </div>
+
+  <div class="deck">
+    <div class="ctrl">
+      <button type="button" id="playBtn">▶ PLAY</button>
+      <button type="button" id="rewindBtn">◀◀ REWIND</button>
+      <button type="button" id="ccBtn" aria-pressed="true">CC</button>
+      <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+      <span class="time" id="timeText">0:00 / 0:00</span>
+    </div>
+    <ol class="chapters" id="chapters"></ol>
+    <p class="credits">Voice: ElevenLabs Eleven v3, voice “Darby Skelm.” Script, animation, and one dolphin’s unexplained eye condition are fiction. Generational claims are jokes, not data.</p>
+  </div>
+</div>
+
+<script src="timing.js"></script>
+<script>
+(() => {
+  const RATE = 1.2;      // playback speed; audio pitch is preserved
+  const GAP = 0.5;       // seconds of silence between segments
+  const FPS = 25;        // envelope frames per second (see tools/analyze_audio.py)
+  const T = window.TIMING;
+
+  const PROPS = {
+    q: '<svg viewBox="0 0 100 100"><text x="50" y="78" text-anchor="middle" font-family="Bowlby One SC, Arial Black, sans-serif" font-size="86" fill="#F2F2EA">?</text></svg>',
+    drop: '<svg viewBox="0 0 100 100"><rect x="22" y="6" width="56" height="88" rx="10" fill="#1B1B1B" stroke="#9FB3C8" stroke-width="3"/><rect x="28" y="16" width="44" height="64" fill="#2E7FC0"/><path d="M50 26 C60 42 66 50 66 58 A16 16 0 0 1 34 58 C34 50 40 42 50 26 Z" fill="#DDF3FF"/><text x="50" y="92" text-anchor="middle" font-family="VT323, monospace" font-size="11" fill="#F2F2EA">DRINK WATER</text></svg>',
+    phone: '<svg viewBox="0 0 100 100"><rect x="26" y="8" width="48" height="84" rx="10" fill="#1B1B1B" stroke="#9FB3C8" stroke-width="3"/><rect x="31" y="18" width="38" height="58" fill="#3AAA5C"/><text x="50" y="44" text-anchor="middle" font-family="VT323, monospace" font-size="13" fill="#fff">INCOMING</text><text x="50" y="58" text-anchor="middle" font-family="VT323, monospace" font-size="13" fill="#fff">CALL</text><path d="M14 30 Q6 50 14 70 M86 30 Q94 50 86 70" stroke="#FFD27A" stroke-width="3" fill="none"/></svg>',
+    words: '<svg viewBox="0 0 100 100"><path d="M8 14 H92 V66 H44 L26 84 V66 H8 Z" fill="#F2F2EA"/><text x="50" y="46" text-anchor="middle" font-family="IBM Plex Sans Condensed, sans-serif" font-weight="700" font-size="16" fill="#1B1B1B">the ick</text></svg>',
+    ring: '<svg viewBox="0 0 100 100"><circle cx="50" cy="42" r="34" fill="none" stroke="#FFF6D8" stroke-width="10"/><circle cx="50" cy="42" r="34" fill="none" stroke="#FFE08A" stroke-width="3" opacity=".7"/><rect x="47" y="76" width="6" height="22" fill="#9FB3C8"/><rect x="38" y="30" width="24" height="18" rx="3" fill="#C8894A"/></svg>',
+    vhs: '<svg viewBox="0 0 100 100"><rect x="6" y="24" width="88" height="52" rx="4" fill="#1B1B1B"/><rect x="16" y="32" width="68" height="16" fill="#EDE6D6"/><text x="50" y="44" text-anchor="middle" font-family="VT323, monospace" font-size="12" fill="#1B1B1B">QUIT: VIBES</text><circle cx="32" cy="62" r="8" fill="#444"/><circle cx="68" cy="62" r="8" fill="#444"/></svg>',
+    mall: '<svg viewBox="0 0 100 100"><rect x="6" y="28" width="88" height="40" rx="4" fill="#E0489A"/><text x="50" y="46" text-anchor="middle" font-family="Bowlby One SC, sans-serif" font-size="13" fill="#fff">FOOD</text><text x="50" y="62" text-anchor="middle" font-family="Bowlby One SC, sans-serif" font-size="13" fill="#fff">COURT</text><rect x="20" y="68" width="4" height="26" fill="#9FB3C8"/><rect x="76" y="68" width="4" height="26" fill="#9FB3C8"/></svg>',
+    wifi: '<svg viewBox="0 0 100 100"><path d="M10 40 A56 56 0 0 1 90 40" stroke="#F2F2EA" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M24 55 A36 36 0 0 1 76 55" stroke="#F2F2EA" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M38 70 A17 17 0 0 1 62 70" stroke="#F2F2EA" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="50" cy="84" r="6" fill="#F2F2EA"/></svg>',
+    rotary: '<svg viewBox="0 0 100 100"><path d="M14 58 C14 40 30 34 50 34 C70 34 86 40 86 58 L80 90 H20 Z" fill="#C0392B"/><circle cx="50" cy="66" r="16" fill="#EDE6D6"/><circle cx="50" cy="66" r="5" fill="#C0392B"/><path d="M8 30 C20 12 80 12 92 30 L84 38 C74 26 26 26 16 38 Z" fill="#8E2A20"/></svg>'
+  };
+
+  // Each scene: card content plus actions keyed by caption cue index.
+  // Actions: g<n>/y<n> reveal item, zp zap prop, zy<n> zap item, zall zap every YOU item, crack, spout, score, dim
+  const SCENES = [
+    { name: "Meet Kevin", title: "The Defendant's Accuser", prop: "q",
+      gx: ["Born 1974, in the ocean", "Raised by a house key on a shoelace", "Co-parent: a microwave with a grudge"],
+      yu: ["Tonight's topic"],
+      acts: { 0: ["spout"], 3: ["zp"], 5: ["g0"], 6: ["g1"], 7: ["g2"], 9: ["y0", "crack", "score"] } },
+    { name: "Latchkey Weekend", title: "Unsupervised Since Birth", prop: "drop",
+      gx: ["Home alone: one weekend, $20, one can of Spam", "Built a raft", "Started a small business", "Tetanus ×2"],
+      yu: ["An app that reminds you to drink water"],
+      acts: { 1: ["g0"], 2: ["g1"], 3: ["g2"], 5: ["g3"], 6: ["y0"], 8: ["zp", "zy0", "score"] } },
+    { name: "The Telephone", title: "Fear of a Ringing Phone", prop: "phone",
+      gx: ["Phone numbers memorized: 40", "Grandma. The pizza place.", "Rick (occupation: do not ask)"],
+      yu: ["Phone rings, reacts as if a bear is in the kitchen"],
+      acts: { 1: ["y0"], 2: ["g0"], 3: ["g1"], 4: ["g2"], 6: ["zp", "zy0", "score"] } },
+    { name: "Vocabulary", title: "Words for Feelings", prop: "words",
+      gx: ["WHATEVER.", "Covered: divorce, the Cold War, three recessions"],
+      yu: ["Boundaries", "Triggers", "The ick"],
+      stamp: 0,
+      acts: { 0: ["y0"], 1: ["y1", "y2"], 3: ["zall", "zp", "g0"], 4: ["g1"], 5: ["score"] } },
+    { name: "Toast", title: "Breakfast as a Brand", prop: "ring",
+      gx: ["Made toast in silence, like monks", "Audience: zero. Dignity: total.", "Skincare routine: the ocean"],
+      yu: ["Toast, but it's content", "Eleven-step skincare routine"],
+      acts: { 0: ["y0"], 1: ["g0"], 3: ["g1"], 4: ["y1"], 6: ["g2", "zp", "zy1", "score"] } },
+    { name: "Employment", title: "The Vibes Were Always Off", prop: "vhs",
+      gx: ["The vibes were always off. Stayed anyway.", "$4 an hour at the video store", "Bonus: Weekend at Bernie's on VHS", "Mental health day: Tuesday"],
+      yu: ["Quit because the vibes were off"],
+      acts: { 0: ["y0"], 1: ["g0"], 2: ["g1"], 3: ["g2"], 5: ["g3", "zp", "zy0", "score"] } },
+    { name: "Navigation", title: "Getting Lost", prop: "mall",
+      gx: ["Got lost. Lives there now.", "Half of Kevin's friends: still in the food court", "Status: doing great"],
+      yu: ["Map app, 4% battery, visible panic"],
+      acts: { 0: ["y0"], 2: ["g0"], 3: ["g1"], 4: ["g2", "zy0", "score"] } },
+    { name: "Contingency Plan", title: "If the Wi-Fi Goes Down", prop: "wifi",
+      gx: ["Wi-Fi down: fine", "Reads paper maps", "Eyes: lasers"],
+      yu: ["Wi-Fi down: cries"],
+      acts: { 0: ["spout"], 2: ["y0"], 3: ["g0"], 4: ["g1"], 5: ["g2", "zp", "zy0", "crack", "score"] } },
+    { name: "Sign-Off", title: "Generation X, Summarized", prop: "rotary",
+      gx: ["Forgotten", "Exhausted", "Correct"],
+      yu: ["Please call. Nobody calls anymore."],
+      acts: { 1: ["g0", "g1", "g2", "score"], 2: ["dim"], 5: ["y0"] } }
+  ];
+  const SCORES = [[1, 0], [41, -1], [81, -3], [1000, -7], [1011, -15], [1450, -40], [9999, -99], ["MAX", "ERR"], ["∞", "ERR"]];
+
+  const $ = id => document.getElementById(id);
+  const tv = $("tv"), stage = $("stage"), kevin = $("kevin"), jaw = $("jaw"), kbody = $("kbody");
+  const prop = $("prop"), beams = $("beams"), ccText = $("ccText");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const audios = T.map((_, i) => {
+    const a = new Audio("audio/scene" + (i + 1) + ".mp3");
+    a.preload = "auto";
+    a.preservesPitch = true;
+    a.defaultPlaybackRate = RATE;
+    return a;
+  });
+  const offsets = [];
+  let acc = 0;
+  T.forEach(s => { offsets.push(acc); acc += s.dur / RATE + GAP; });
+  const TOTAL = acc - GAP;
+
+  let cur = -1, fired = new Set(), playing = false, inGap = false, gapLeft = 0, gapStart = 0, gapTimer = null, unlocked = false, ended = false;
+
+  const fmt = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+  const fmtVcr = s => { s = Math.max(0, Math.floor(s)); return "0:" + String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); };
+
+  // Chapter list
+  SCENES.forEach((sc, i) => {
+    const li = document.createElement("li");
+    li.innerHTML = '<button type="button"><span class="n">' + String(i + 1).padStart(2, "0") + '</span><span>' + sc.name + '</span><span class="d">' + fmt(T[i].dur / RATE) + '</span></button>';
+    li.querySelector("button").addEventListener("click", () => { unlock(); jumpTo(i); });
+    $("chapters").appendChild(li);
+  });
+  const chapterBtns = [...document.querySelectorAll("#chapters button")];
+
+  function renderCard(i, showAll) {
+    const sc = SCENES[i];
+    $("cardEx").textContent = "EXHIBIT " + String(i + 1).padStart(2, "0");
+    $("cardTitle").textContent = sc.title;
+    fillCol($("colGx"), sc.gx, showAll, sc.stamp);
+    fillCol($("colYu"), sc.yu, showAll);
+  }
+  function fillCol(col, items, showAll, stampIdx) {
+    col.querySelectorAll(".item").forEach(n => n.remove());
+    items.forEach((t, k) => {
+      const d = document.createElement("div");
+      d.className = "item" + (k === stampIdx ? " stamp" : "") + (showAll ? " on" : "");
+      d.textContent = t;
+      col.appendChild(d);
+    });
+  }
+  function renderGuide() {
+    $("cardEx").textContent = "TONIGHT";
+    $("cardTitle").textContent = "On the Program";
+    fillCol($("colGx"), ["Latchkey weekends", "Forty memorized phone numbers", "One word for feelings: whatever"], true);
+    fillCol($("colYu"), ["Hydration reminder apps", "Fear of phone calls", "Eleven-step skincare"], true);
+  }
+
+  function setScore(i) {
+    const s = i < 0 ? [0, 0] : SCORES[i];
+    $("scoreX").textContent = s[0];
+    $("scoreY").textContent = s[1];
+  }
+
+  function setState(txt) { $("osdState").textContent = txt; }
+
+  // ---------- Lasers ----------
+  function center(el) {
+    const r = el.getBoundingClientRect(), t = tv.getBoundingClientRect();
+    return [r.left + r.width / 2 - t.left, r.top + r.height / 2 - t.top];
+  }
+  function zap(target, onHit) {
+    if (!target) return;
+    const eyes = [$("eyeN"), $("eyeF")].map(center);
+    const [tx, ty] = center(target);
+    kevin.classList.add("firing");
+    const ns = "http://www.w3.org/2000/svg";
+    const lines = [];
+    eyes.forEach(([ex, ey], k) => {
+      ["outer", "core"].forEach(cls => {
+        const l = document.createElementNS(ns, "line");
+        l.setAttribute("x1", ex); l.setAttribute("y1", ey);
+        l.setAttribute("x2", tx + (k ? 6 : -6)); l.setAttribute("y2", ty);
+        l.setAttribute("class", cls);
+        const len = Math.hypot(tx - ex, ty - ey);
+        l.style.strokeDasharray = len; l.style.strokeDashoffset = len;
+        beams.appendChild(l); lines.push(l);
+        l.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: 140, fill: "forwards", easing: "ease-in" });
+      });
+    });
+    setTimeout(() => { sparks(tx, ty); onHit && onHit(); }, 150);
+    setTimeout(() => {
+      lines.forEach(l => l.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, fill: "forwards" }));
+      kevin.classList.remove("firing");
+    }, 520);
+    setTimeout(() => lines.forEach(l => l.remove()), 760);
+  }
+  function sparks(x, y) {
+    if (reduced) return;
+    for (let k = 0; k < 14; k++) {
+      const s = document.createElement("div");
+      s.className = "spark";
+      s.style.left = x + "px"; s.style.top = y + "px";
+      tv.appendChild(s);
+      const a = Math.random() * Math.PI * 2, d = 30 + Math.random() * 60;
+      s.animate([{ transform: "translate(0,0)", opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d + 20}px)`, opacity: 0 }], { duration: 500 + Math.random() * 300, easing: "cubic-bezier(.2,.7,.4,1)" }).onfinish = () => s.remove();
+    }
+  }
+  function burnItem(el) { if (el) el.classList.add("zapped"); }
+  function crack() {
+    const t = tv.getBoundingClientRect();
+    const eyes = center($("eyeN"));
+    const fake = { getBoundingClientRect: () => ({ left: t.left + t.width * 0.6, top: t.top + t.height * 0.42, width: 0, height: 0 }) };
+    zap(fake, () => {
+      $("crack").classList.add("on");
+      if (!reduced) tv.classList.remove("jolt"), void tv.offsetWidth, tv.classList.add("jolt");
+      $("flash").animate([{ opacity: .7 }, { opacity: 0 }], { duration: 260 });
+    });
+  }
+
+  function doAct(a) {
+    const m = a.match(/^([gy])(\d)$/);
+    if (m) {
+      const el = $(m[1] === "g" ? "colGx" : "colYu").querySelectorAll(".item")[+m[2]];
+      if (el) el.classList.add("on");
+      return;
+    }
+    if (a === "zp") return zap(prop, () => prop.classList.add("burn"));
+    if (a.startsWith("zy")) { const el = $("colYu").querySelectorAll(".item")[+a.slice(2)]; return setTimeout(() => zap(el, () => burnItem(el)), a === "zy0" ? 0 : 0); }
+    if (a === "zall") { $("colYu").querySelectorAll(".item").forEach((el, k) => setTimeout(() => zap(el, () => burnItem(el)), k * 260)); return; }
+    if (a === "crack") return setTimeout(crack, 250);
+    if (a === "spout") { kevin.classList.remove("spouting"); void kevin.getBBox(); kevin.classList.add("spouting"); return; }
+    if (a === "score") return setScore(cur);
+    if (a === "dim") return $("dim").classList.add("on");
+  }
+
+  // ---------- Playback ----------
+  function prepScene(i) {
+    cur = i; fired = new Set();
+    prop.className = ""; prop.innerHTML = PROPS[SCENES[i].prop];
+    renderCard(i, false);
+    setScore(i - 1);
+    ccText.textContent = "";
+    $("crack").classList.remove("on");
+    $("dim").classList.toggle("on", false);
+    chapterBtns.forEach((b, k) => b.setAttribute("aria-current", k === i ? "true" : "false"));
+  }
+  function startScene(i) {
+    inGap = false; clearTimeout(gapTimer);
+    prepScene(i);
+    const a = audios[i];
+    a.currentTime = 0;
+    a.playbackRate = RATE;
+    if (playing) { a.muted = false; a.play().catch(onPlayFail); }
+  }
+  function fireCues(t) {
+    const cues = T[cur].cues;
+    for (let j = 0; j < cues.length; j++) {
+      if (!fired.has(j) && t >= cues[j][0]) {
+        fired.add(j);
+        ccText.textContent = cues[j][1];
+        (SCENES[cur].acts[j] || []).forEach(doAct);
+      }
+    }
+  }
+  audios.forEach((a, i) => a.addEventListener("ended", () => {
+    if (i !== cur) return;
+    fireCues(Infinity);
+    if (i === audios.length - 1) return finish();
+    inGap = true; gapLeft = GAP; gapStart = performance.now();
+    gapTimer = setTimeout(() => startScene(i + 1), GAP * 1000);
+  }));
+
+  function finish() {
+    playing = false; ended = true; setState("STOP ■"); $("playBtn").textContent = "▶ PLAY";
+    setTimeout(() => {
+      const o = $("outro"); o.hidden = false;
+      if (!reduced) o.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 600 });
+    }, 1200);
+  }
+
+  function unlock() {
+    // iOS only lets audio play later if each element was started inside a user gesture.
+    if (unlocked) return;
+    unlocked = true;
+    audios.forEach(a => {
+      a.muted = true;
+      a.play().then(() => {
+        a.muted = false;
+        if (a !== audios[cur] || inGap || !playing) { a.pause(); a.currentTime = 0; }
+      }).catch(() => { a.muted = false; });
+    });
+  }
+  // A play() interrupted by a pause() rejects with AbortError; only a real refusal should stop the tape.
+  const onPlayFail = e => { if (e && e.name !== "AbortError") pause(); };
+  function play() {
+    if (ended) { rewind(); }
+    unlock();
+    $("intro").hidden = true; $("outro").hidden = true;
+    playing = true; setState("PLAY ▶"); $("playBtn").textContent = "❚❚ PAUSE";
+    if (cur < 0) return startScene(0);
+    if (inGap) { gapTimer = setTimeout(() => startScene(cur + 1), gapLeft * 1000); gapStart = performance.now(); return; }
+    audios[cur].playbackRate = RATE;
+    audios[cur].muted = false;
+    audios[cur].play().catch(onPlayFail);
+  }
+  function pause() {
+    playing = false; setState("PAUSE ❚❚"); $("playBtn").textContent = "▶ PLAY";
+    if (inGap) { clearTimeout(gapTimer); gapLeft = Math.max(0, gapLeft - (performance.now() - gapStart) / 1000); }
+    else if (cur >= 0) audios[cur].pause();
+  }
+  function rewind() {
+    audios.forEach(a => { a.pause(); a.currentTime = 0; });
+    clearTimeout(gapTimer); inGap = false; ended = false;
+    cur = -1; playing = false; setState("STOP ■"); $("playBtn").textContent = "▶ PLAY";
+    renderGuide(); setScore(-1); ccText.textContent = "";
+    prop.className = ""; prop.innerHTML = PROPS.q;
+    $("crack").classList.remove("on"); $("dim").classList.remove("on");
+    $("outro").hidden = true; $("intro").hidden = false;
+    chapterBtns.forEach(b => b.setAttribute("aria-current", "false"));
+  }
+  function jumpTo(i) {
+    if (cur >= 0) audios[cur].pause();
+    ended = false; $("intro").hidden = true; $("outro").hidden = true;
+    playing = true; setState("PLAY ▶"); $("playBtn").textContent = "❚❚ PAUSE";
+    startScene(i);
+  }
+
+  $("bigPlay").addEventListener("click", play);
+  $("rewind2").addEventListener("click", () => { rewind(); play(); });
+  $("playBtn").addEventListener("click", () => playing ? pause() : play());
+  $("rewindBtn").addEventListener("click", rewind);
+  $("ccBtn").addEventListener("click", e => {
+    const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+    e.currentTarget.setAttribute("aria-pressed", on);
+    $("cc").classList.toggle("off", !on);
+  });
+  document.addEventListener("keydown", e => {
+    if (e.code === "Space" && !/BUTTON|INPUT|TEXTAREA/.test(e.target.tagName)) { e.preventDefault(); playing ? pause() : play(); }
+  });
+
+  // ---------- Frame loop: mouth, bob, clock ----------
+  let jawDeg = 0;
+  function frame(now) {
+    let t = 0, level = 0, elapsed = 0;
+    if (cur >= 0) {
+      const a = audios[cur];
+      t = a.currentTime;
+      if (!inGap && !a.paused) {
+        fireCues(t);
+        const env = T[cur].env;
+        level = +(env[Math.floor(t * FPS)] || 0) / 9;
+      }
+      elapsed = inGap ? offsets[cur] + T[cur].dur / RATE + (GAP - gapLeft + (playing ? (now - gapStart) / 1000 : 0))
+                      : offsets[cur] + t / RATE;
+      if (ended) elapsed = TOTAL;
+    }
+    jawDeg += (level * 24 - jawDeg) * 0.45;
+    jaw.style.transform = "rotate(" + jawDeg.toFixed(2) + "deg)";
+    const bob = reduced ? 0 : Math.sin(now / 700) * 5 - level * 4;
+    const tilt = reduced ? 0 : Math.sin(now / 1300) * 1.5 - level * 2;
+    kbody.style.transform = "translateY(" + bob.toFixed(2) + "px) rotate(" + tilt.toFixed(2) + "deg)";
+    $("osdClock").textContent = fmtVcr(elapsed);
+    $("timeText").textContent = fmt(elapsed) + " / " + fmt(TOTAL);
+    $("barFill").style.width = Math.min(100, (elapsed / TOTAL) * 100) + "%";
+    requestAnimationFrame(frame);
+  }
+
+  renderGuide();
+  prop.innerHTML = PROPS.q;
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

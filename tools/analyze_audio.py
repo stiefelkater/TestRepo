@@ -1,0 +1,117 @@
+"""Build timing.js from the ElevenLabs voice clips in audio/.
+
+For each scene it writes:
+  dur   - clip length in seconds
+  cues  - [start_seconds, caption] per line, aligned to detected speech onsets
+  env   - mouth-open envelope, one digit (0-9) per 40 ms frame
+
+Requires: pip install miniaudio numpy
+Run from the repo root: python3 tools/analyze_audio.py
+"""
+import json
+import re
+
+import miniaudio
+import numpy as np
+
+HOP = 0.04  # envelope frame (25 fps)
+
+SCRIPT = {
+    1: ["[sighs]", "Oh. Hi.", "I'm Kevin. I'm a dolphin.", "I have laser eyes.",
+        "No, I will not be explaining that.", "I'm Generation X.",
+        "I was raised by a house key on a shoelace", "and a microwave that hated me.",
+        "And I'm here to talk about...", "[sarcastic] you."],
+    2: ["When I was nine, my parents left me alone for a weekend", "with twenty dollars and a can of Spam.",
+        "I built a raft.", "I started a small business.", "I got tetanus.", "Twice.",
+        "Today, you need an app to remind you to drink water.", "[laughs] Water.", "I LIVE in water."],
+    3: ["You won't answer a phone call.", "To you, a ringing phone is a bear in the kitchen.",
+        "We memorized forty phone numbers.", "Grandma. The pizza place.", "And a guy named Rick.",
+        "Nobody knew what Rick did.", "We didn't ASK."],
+    4: ["You have a word for everything.", "Boundaries. Triggers. The ick.", "We had ONE word.",
+        "Whatever.", "It handled divorce, the Cold War, and three recessions.",
+        "That's emotional regulation, sweetie."],
+    5: ["You film yourself making toast and call it content.", "We made toast in silence. Like monks.",
+        "Nobody watched.", "That's called dignity.", "And your skincare routine has eleven steps.",
+        "Mine has one.", "It's the ocean."],
+    6: ["You quit jobs because the vibes are off.", "The vibes were ALWAYS off.",
+        "We worked at the video store for four bucks an hour", "and a free copy of Weekend at Bernie's.",
+        "We didn't take mental health days.", "We had Tuesdays."],
+    7: ["And when we got lost, we didn't open a map app.", "We just...", "lived there now.",
+        "Half my friends still live in a mall food court.", "They're doing great."],
+    8: ["[sighs] Look.", "I'm not saying you're doomed.",
+        "I'm saying if the Wi-Fi goes down, you will cry,", "and I will be fine.",
+        "Because I can read a paper map.", "And my eyes shoot LASERS."],
+    9: ["So. Generation X.", "Forgotten. Exhausted. Correct.",
+        "Now if you'll excuse me, I'm going to sit in a dark room", "and not tell anyone where I am.",
+        "Don't call me.", "Actually... do call.", "Nobody calls anymore."],
+}
+
+
+def syllables(word):
+    w = re.sub(r"[^a-z]", "", word.lower())
+    if not w:
+        return 0
+    n = len(re.findall(r"[aeiouy]+", w))
+    if w.endswith("e") and n > 1 and not w.endswith("le"):
+        n -= 1
+    return max(1, n)
+
+
+def weight(line):
+    tags = re.findall(r"\[\w+\]", line)
+    text = re.sub(r"\[\w+\]", "", line)
+    w = sum(syllables(x) for x in re.findall(r"[A-Za-z']+", text)) + 5 * len(tags)
+    return w + 1.5 * len(re.findall(r"\.\.\.|[.?!,]", text))
+
+
+def analyze(path, lines):
+    d = miniaudio.decode_file(path, output_format=miniaudio.SampleFormat.FLOAT32, nchannels=1)
+    x = np.array(d.samples, dtype=np.float32)
+    sr = d.sample_rate
+
+    # Voice activity at 20 ms, used for cue alignment.
+    win = int(sr * 0.02)
+    n = len(x) // win
+    db = 20 * np.log10(np.sqrt((x[: n * win].reshape(n, win) ** 2).mean(1)) + 1e-9)
+    voiced = db > db.max() - 35
+    onsets = [k * 0.02 for k in range(n) if voiced[k] and (k == 0 or not voiced[max(0, k - 12):k].any())]
+    idx = np.where(voiced)[0]
+    s0, s1 = idx[0] * 0.02, (idx[-1] + 1) * 0.02
+
+    # Spread lines over the speech span by syllable weight, then snap to the nearest onset.
+    weights = [weight(l) for l in lines]
+    total, cum, starts = sum(weights), 0.0, []
+    for j, w in enumerate(weights):
+        est = s0 + (s1 - s0) * cum / total
+        if j == 0:
+            t = onsets[0] if onsets else s0
+        else:
+            cands = [o for o in onsets if o > starts[-1] + 0.3]
+            near = min(cands, key=lambda o: abs(o - est)) if cands else None
+            t = near if near is not None and abs(near - est) < 1.2 else est
+        starts.append(round(float(t), 2))
+        cum += w
+
+    # Mouth envelope at 40 ms.
+    win = int(sr * HOP)
+    n = len(x) // win
+    rms = np.sqrt((x[: n * win].reshape(n, win) ** 2).mean(1))
+    lvl = np.clip((20 * np.log10(rms + 1e-9) - (db.max() - 32)) / 28, 0, 1)
+    env = "".join(str(int(round(v * 9))) for v in lvl)
+
+    cues = [[s, re.sub(r"\[\w+\]\s*", "", l).strip() or "*sighs*"] for s, l in zip(starts, lines)]
+    return {"dur": round(len(x) / sr, 2), "cues": cues, "env": env}
+
+
+def main():
+    out = [analyze(f"audio/scene{i}.mp3", SCRIPT[i]) for i in sorted(SCRIPT)]
+    with open("timing.js", "w") as f:
+        f.write("// Generated by tools/analyze_audio.py. Do not edit by hand.\n")
+        f.write("window.TIMING = " + json.dumps(out, separators=(",", ":")) + ";\n")
+    for i, s in enumerate(out, 1):
+        print(f"scene {i}: {s['dur']:.2f}s, {len(s['cues'])} cues")
+    print(f"total audio: {sum(s['dur'] for s in out):.2f}s")
+
+
+if __name__ == "__main__":
+    main()
