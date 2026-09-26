@@ -391,19 +391,21 @@
   const prop = $("prop"), beams = $("beams"), ccText = $("ccText");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const audios = T.map((_, i) => {
-    const a = new Audio("audio/scene" + (i + 1) + ".mp3");
-    a.preload = "auto";
-    a.preservesPitch = true;
-    a.defaultPlaybackRate = RATE;
-    return a;
-  });
+  // One audio element for the whole tape: segments swap its source, so two clips can never play at once,
+  // and the element the viewer's click started stays allowed to play on iOS.
+  const SRCS = T.map((_, i) => "audio/scene" + (i + 1) + ".mp3");
+  const player = new Audio();
+  player.preload = "auto";
+  player.preservesPitch = true;
+  player.defaultPlaybackRate = RATE;
+  // Warm the browser cache so later segments start without a network pause.
+  SRCS.forEach(u => { try { fetch(u).catch(() => {}); } catch (e) {} });
   const offsets = [];
   let acc = 0;
   T.forEach(s => { offsets.push(acc); acc += s.dur / RATE + GAP; });
   const TOTAL = acc - GAP;
 
-  let cur = -1, fired = new Set(), playing = false, inGap = false, gapLeft = 0, gapStart = 0, gapTimer = null, unlocked = false, ended = false;
+  let cur = -1, fired = new Set(), playing = false, inGap = false, gapLeft = 0, gapStart = 0, gapTimer = null, ended = false, ready = false, epoch = 0;
 
   const fmt = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
   const fmtVcr = s => { s = Math.max(0, Math.floor(s)); return "0:" + String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); };
@@ -412,7 +414,7 @@
   SCENES.forEach((sc, i) => {
     const li = document.createElement("li");
     li.innerHTML = '<button type="button"><span class="n">' + String(i + 1).padStart(2, "0") + '</span><span>' + sc.name + '</span><span class="d">' + fmt(T[i].dur / RATE) + '</span></button>';
-    li.querySelector("button").addEventListener("click", () => { unlock(); jumpTo(i); });
+    li.querySelector("button").addEventListener("click", () => jumpTo(i));
     $("chapters").appendChild(li);
   });
   const chapterBtns = [...document.querySelectorAll("#chapters button")];
@@ -448,6 +450,9 @@
 
   function setState(txt) { $("osdState").textContent = txt; }
 
+  // setTimeout that is dropped if the viewer rewinds or changes segment before it fires.
+  function later(fn, ms) { const e = epoch; return setTimeout(() => { if (e === epoch) fn(); }, ms); }
+
   // ---------- Lasers ----------
   function center(el) {
     const r = el.getBoundingClientRect(), t = tv.getBoundingClientRect();
@@ -472,7 +477,7 @@
         l.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: 140, fill: "forwards", easing: "ease-in" });
       });
     });
-    setTimeout(() => { sparks(tx, ty); onHit && onHit(); }, 150);
+    later(() => { sparks(tx, ty); onHit && onHit(); }, 150);
     setTimeout(() => {
       lines.forEach(l => l.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, fill: "forwards" }));
       kevin.classList.remove("firing");
@@ -493,7 +498,6 @@
   function burnItem(el) { if (el) el.classList.add("zapped"); }
   function crack() {
     const t = tv.getBoundingClientRect();
-    const eyes = center($("eyeN"));
     const fake = { getBoundingClientRect: () => ({ left: t.left + t.width * 0.6, top: t.top + t.height * 0.42, width: 0, height: 0 }) };
     zap(fake, () => {
       $("crack").classList.add("on");
@@ -510,9 +514,9 @@
       return;
     }
     if (a === "zp") return zap(prop, () => prop.classList.add("burn"));
-    if (a.startsWith("zy")) { const el = $("colYu").querySelectorAll(".item")[+a.slice(2)]; return setTimeout(() => zap(el, () => burnItem(el)), a === "zy0" ? 0 : 0); }
-    if (a === "zall") { $("colYu").querySelectorAll(".item").forEach((el, k) => setTimeout(() => zap(el, () => burnItem(el)), k * 260)); return; }
-    if (a === "crack") return setTimeout(crack, 250);
+    if (a.startsWith("zy")) { const el = $("colYu").querySelectorAll(".item")[+a.slice(2)]; return zap(el, () => burnItem(el)); }
+    if (a === "zall") { $("colYu").querySelectorAll(".item").forEach((el, k) => later(() => zap(el, () => burnItem(el)), k * 260)); return; }
+    if (a === "crack") return later(crack, 250);
     if (a === "spout") { kevin.classList.remove("spouting"); void kevin.getBBox(); kevin.classList.add("spouting"); return; }
     if (a === "score") return setScore(cur);
     if (a === "dim") return $("dim").classList.add("on");
@@ -520,22 +524,22 @@
 
   // ---------- Playback ----------
   function prepScene(i) {
+    epoch++; clearTimeout(gapTimer); inGap = false;
     cur = i; fired = new Set();
     prop.className = ""; prop.innerHTML = PROPS[SCENES[i].prop];
     renderCard(i, false);
     setScore(i - 1);
     ccText.textContent = "";
     $("crack").classList.remove("on");
-    $("dim").classList.toggle("on", false);
+    $("dim").classList.remove("on");
     chapterBtns.forEach((b, k) => b.setAttribute("aria-current", k === i ? "true" : "false"));
   }
   function startScene(i) {
-    inGap = false; clearTimeout(gapTimer);
     prepScene(i);
-    const a = audios[i];
-    a.currentTime = 0;
-    a.playbackRate = RATE;
-    if (playing) { a.muted = false; a.play().catch(onPlayFail); }
+    ready = false;            // ignore currentTime until the new clip is actually playing
+    player.src = SRCS[i];
+    player.playbackRate = RATE;
+    if (playing) player.play().catch(onPlayFail);
   }
   function fireCues(t) {
     const cues = T[cur].cues;
@@ -547,56 +551,64 @@
       }
     }
   }
-  audios.forEach((a, i) => a.addEventListener("ended", () => {
-    if (i !== cur) return;
+  player.addEventListener("playing", () => { ready = true; });
+  player.addEventListener("ended", () => {
+    if (cur < 0 || !ready) return;
     fireCues(Infinity);
-    if (i === audios.length - 1) return finish();
+    ready = false;
+    if (cur === T.length - 1) return finish();
     inGap = true; gapLeft = GAP; gapStart = performance.now();
-    gapTimer = setTimeout(() => startScene(i + 1), GAP * 1000);
-  }));
+    const next = cur + 1;
+    gapTimer = later(() => startScene(next), GAP * 1000);
+  });
+  player.addEventListener("error", () => {
+    if (cur < 0) return;
+    stopPlaying("STOP ■");
+    ccText.textContent = "Tape jammed: segment " + (cur + 1) + " audio did not load. Check your connection and press Play.";
+  });
 
+  function stopPlaying(state) {
+    playing = false; setState(state); $("playBtn").textContent = "▶ PLAY";
+  }
+  function startPlaying() {
+    playing = true; setState("PLAY ▶"); $("playBtn").textContent = "❚❚ PAUSE";
+    $("intro").hidden = true; $("outro").hidden = true;
+  }
   function finish() {
-    playing = false; ended = true; setState("STOP ■"); $("playBtn").textContent = "▶ PLAY";
-    setTimeout(() => {
+    ended = true; stopPlaying("STOP ■");
+    later(() => {
       const o = $("outro"); o.hidden = false;
       if (!reduced) o.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 600 });
     }, 1200);
   }
 
-  function unlock() {
-    // iOS only lets audio play later if each element was started inside a user gesture.
-    if (unlocked) return;
-    unlocked = true;
-    audios.forEach(a => {
-      a.muted = true;
-      a.play().then(() => {
-        a.muted = false;
-        if (a !== audios[cur] || inGap || !playing) { a.pause(); a.currentTime = 0; }
-      }).catch(() => { a.muted = false; });
-    });
+  // A play() interrupted by a pause() or source change rejects with AbortError; that is not a failure.
+  function onPlayFail(e) {
+    if (e && e.name === "AbortError") return;
+    player.pause();
+    stopPlaying("PAUSE ❚❚");
+    if (e && e.name === "NotAllowedError") ccText.textContent = "Your browser paused the tape. Press Play to continue.";
   }
-  // A play() interrupted by a pause() rejects with AbortError; only a real refusal should stop the tape.
-  const onPlayFail = e => { if (e && e.name !== "AbortError") pause(); };
   function play() {
-    if (ended) { rewind(); }
-    unlock();
-    $("intro").hidden = true; $("outro").hidden = true;
-    playing = true; setState("PLAY ▶"); $("playBtn").textContent = "❚❚ PAUSE";
+    if (ended) rewind();
+    startPlaying();
     if (cur < 0) return startScene(0);
-    if (inGap) { gapTimer = setTimeout(() => startScene(cur + 1), gapLeft * 1000); gapStart = performance.now(); return; }
-    audios[cur].playbackRate = RATE;
-    audios[cur].muted = false;
-    audios[cur].play().catch(onPlayFail);
+    if (inGap) { gapStart = performance.now(); const next = cur + 1; gapTimer = later(() => startScene(next), gapLeft * 1000); return; }
+    if (player.error) return startScene(cur);   // retry a segment that failed to load
+    player.playbackRate = RATE;
+    player.play().catch(onPlayFail);
   }
   function pause() {
-    playing = false; setState("PAUSE ❚❚"); $("playBtn").textContent = "▶ PLAY";
+    stopPlaying("PAUSE ❚❚");
     if (inGap) { clearTimeout(gapTimer); gapLeft = Math.max(0, gapLeft - (performance.now() - gapStart) / 1000); }
-    else if (cur >= 0) audios[cur].pause();
+    else player.pause();
   }
   function rewind() {
-    audios.forEach(a => { a.pause(); a.currentTime = 0; });
-    clearTimeout(gapTimer); inGap = false; ended = false;
-    cur = -1; playing = false; setState("STOP ■"); $("playBtn").textContent = "▶ PLAY";
+    epoch++;
+    player.pause();
+    player.removeAttribute("src"); player.load();
+    clearTimeout(gapTimer); inGap = false; ended = false; ready = false;
+    cur = -1; stopPlaying("STOP ■");
     renderGuide(); setScore(-1); ccText.textContent = "";
     prop.className = ""; prop.innerHTML = PROPS.q;
     $("crack").classList.remove("on"); $("dim").classList.remove("on");
@@ -604,9 +616,9 @@
     chapterBtns.forEach(b => b.setAttribute("aria-current", "false"));
   }
   function jumpTo(i) {
-    if (cur >= 0) audios[cur].pause();
-    ended = false; $("intro").hidden = true; $("outro").hidden = true;
-    playing = true; setState("PLAY ▶"); $("playBtn").textContent = "❚❚ PAUSE";
+    player.pause();
+    ended = false;
+    startPlaying();
     startScene(i);
   }
 
@@ -628,9 +640,8 @@
   function frame(now) {
     let t = 0, level = 0, elapsed = 0;
     if (cur >= 0) {
-      const a = audios[cur];
-      t = a.currentTime;
-      if (!inGap && !a.paused) {
+      t = ready ? player.currentTime : 0;
+      if (ready && !inGap && !player.paused) {
         fireCues(t);
         const env = T[cur].env;
         level = +(env[Math.floor(t * FPS)] || 0) / 9;
